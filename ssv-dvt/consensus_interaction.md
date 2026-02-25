@@ -1,52 +1,71 @@
-
 ## Duty retrieval from Consensus Client
 
-  - Scheduler is initialized in operator/node.go:116 with a beacon-facing interface in operator/duties/scheduler.go:53.
-  - It starts by subscribing to head events and fetching initial duties in operator/duties/scheduler.go:185 and operator/duties/scheduler.go:201.
-  - Attestation duties come from AttesterDuties in beacon/goclient/attest.go:35, consumed by operator/duties/attester.go:280.
-  - Proposal duties come from ProposerDuties in beacon/goclient/proposer.go:31, consumed by operator/duties/proposer.go:210.
-  - Sync committee duties come from SyncCommitteeDuties in beacon/goclient/sync_committee.go:15, consumed by operator/duties/sync_committee.go:236.
-  - Aggregator duties are derived from attester duties (not fetched as a separate CL duty API), see operator/duties/attester.go:210 and operator/duties/attester.go:236.
-  - Duties are cached in duty stores (operator/duties/dutystore/duties.go:99, operator/duties/dutystore/sync_committee.go:63).
+- Scheduler is wired in `operator/node.go::New(...)` and started in `operator/node.go::Start(...)`.
+- Beacon-facing duty APIs are abstracted in `operator/duties/scheduler.go::BeaconNode` and consumed by scheduler handlers.
+- Startup path:
+  - `operator/duties/scheduler.go::Start(...)` subscribes to head events (`listenToHeadEvents`) and calls each handler's `HandleInitialDuties(...)`.
+- Duty sources:
+  - Attester duties: `beacon/goclient/attest.go::AttesterDuties(...)` -> consumed in `operator/duties/attester.go::fetchAndProcessDuties(...)`.
+  - Proposer duties: `beacon/goclient/proposer.go::ProposerDuties(...)` -> consumed in `operator/duties/proposer.go::fetchAndProcessDuties(...)`.
+  - Sync committee duties: `beacon/goclient/sync_committee.go::SyncCommitteeDuties(...)` -> consumed in `operator/duties/sync_committee.go::fetchAndProcessDuties(...)`.
+- Aggregator duties are derived from attester duties (not fetched from a separate CL duty endpoint) in `operator/duties/attester.go::executeAggregatorDuties(...)`.
+  - This is explicitly post-Alan fork behavior (see the function comment).
+- Duties are cached in:
+  - `operator/duties/dutystore/duties.go::Duties.Set(...)`
+  - `operator/duties/dutystore/sync_committee.go::SyncCommitteeDuties.Set(...)`
 
 ## Slot/epoch scheduling and re-scheduling
 
-  - The scheduler runs role handlers (attester/proposer/sync/committee) from operator/duties/scheduler.go:155.
-  - Each handler has epoch/period lifecycle logic and reset/reload paths:
-      - Attester: operator/duties/attester.go:124, operator/duties/attester.go:149
-      - Proposer: operator/duties/proposer.go:100
-      - Sync committee: operator/duties/sync_committee.go:101, operator/duties/sync_committee.go:118
-  - Validator index changes trigger duty refresh through indicesChange (operator/validator/controller.go:946, operator/validator/task_executor.go:63).
-  - Scheduled duties are handed to validator execution via operator/validator/controller.go:625 and then queued/processed by SSV validator logic (protocol/v2/ssv/validator/duty_executor.go:21).
+- `operator/duties/scheduler.go::NewScheduler(...)` registers handlers; `Start(...)` actually runs them (including `HandleInitialDuties` and goroutine launch for `HandleDuties`).
+- Handlers implement lifecycle reset/refetch logic:
+  - attester: `operator/duties/attester.go::HandleDuties(...)`
+  - proposer: `operator/duties/proposer.go::HandleDuties(...)`
+  - sync committee: `operator/duties/sync_committee.go::HandleDuties(...)`
+- Validator index changes trigger refresh via `operator/validator/controller.go::reportIndicesChange(...)` and are emitted from task execution paths such as `operator/validator/task_executor.go::ReactivateCluster(...)`.
+- Execution dispatch:
+  - `operator/validator/controller.go::ExecuteDuty(...)`
+  - then queue/event handoff in `protocol/v2/ssv/validator/duty_executor.go::Validator.ExecuteDuty(...)`
 
 ## Reorg / fork-choice / head-change handling
 
-  - Beacon head events are streamed by beacon/goclient/events.go:194.
-  - Scheduler compares duty-dependent roots and emits ReorgEvent when current or previous roots changed in operator/duties/scheduler.go:349 and operator/duties/scheduler.go:376.
-  - Handlers consume reorg signals and invalidate/reset affected epoch/period duties before refetching.
-  - This avoids acting on stale duty assignments after fork-choice movement.
+- Head event subscription and streaming entry points:
+  - `beacon/goclient/events.go::SubscribeToHeadEvents(...)`
+  - `beacon/goclient/events.go::startEventListener(...)`
+- Scheduler reorg checks happen in `operator/duties/scheduler.go::HandleHeadEvent(...)` with three distinct comparisons:
+  1. Epoch transition: old `currentDutyDependentRoot` vs new `PreviousDutyDependentRoot`.
+  2. Same-epoch previous-root change: old vs new `PreviousDutyDependentRoot`.
+  3. Same-epoch current-root change: old vs new `CurrentDutyDependentRoot`.
+- Each check emits `ReorgEvent` with the corresponding `Previous`/`Current` flags.
+- Handlers consume reorg events and reset/refetch affected duty windows to avoid stale assignments.
 
 ## Alignment with slot boundaries
 
-  - Slot math is driven by beacon network config in networkconfig/beacon.go:39 and slot ticker setup in cli/operator/node.go:492.
-  - Scheduler advances head-slot timing with:
-      - a fallback at ~1/3 slot (operator/duties/scheduler.go:303)
-      - an early-block fast path (operator/duties/scheduler.go:394)
-  - Committee execution is gated until headSlot >= dutySlot (operator/duties/scheduler.go:565).
-  - Runner pulls attestation data near execution time (protocol/v2/ssv/runner/committee.go:1041) to stay protocol-timed.
+- Slot math is driven by `networkconfig/beacon.go` (`SlotStartTime`, `Estimated*`, `IntervalDuration` where `intervalsPerSlot=3`) and slot ticker setup in `cli/operator/node.go` (`slotTickerProvider`).
+- Scheduler head advancement has dual triggers:
+  - time-based one-third-slot fallback in `operator/duties/scheduler.go::SlotTicker(...)`
+  - early-head fast path in `operator/duties/scheduler.go::HandleHeadEvent(...)`
+- Committee execution is not a simple static gate; it blocks in `operator/duties/scheduler.go::waitOneThirdIntoSlotOrValidBlock(...)` on a condition variable and unblocks when either trigger advances `headSlot`.
+- Runner pulls attestation data near execution time in `protocol/v2/ssv/runner/committee.go::executeDuty(...)`.
 
 ## Consensus-rule enforcement vs SSV orchestration
 
-  - Orchestration layer: scheduler + handlers + controller decide when to run duties.
-  - Consensus enforcement layer: beacon object APIs + value/message validation decide what is valid:
-      - Beacon client contract: protocol/v2/blockchain/beacon/client.go:17
-      - Duty value checks: protocol/v2/ssv/value_check.go:41
-      - Consensus message checks: message/validation/consensus_validation.go:46, message/validation/common_checks.go:38
-  - This separation keeps Ethereum consensus correctness anchored to CL/rule validators, while SSV focuses on distributed execution/liveness.
+- Orchestration layer: scheduler + handlers + controller decide when duties run.
+- Consensus enforcement layer: beacon object APIs and validation logic decide what is valid.
+  - Beacon client contract: `protocol/v2/blockchain/beacon/client.go` (interfaces).
+  - Duty value checks: `protocol/v2/ssv/value_check.go::(*voteChecker).CheckValue(...)`.
+  - Consensus message checks: `message/validation/consensus_validation.go::validateConsensusMessage(...)` and shared checks in `message/validation/common_checks.go`.
+- This separation keeps Ethereum consensus correctness anchored to CL/rule validators while SSV focuses on distributed execution and liveness.
 
 ## Why this prevents misses/duplicates under failures
 
-  - Duplicate/stale suppression: CommitteeDutyGuard in protocol/v2/ssv/validator/committee_guard.go:27.
-  - Submission dedupe and completion tracking: protocol/v2/ssv/runner/committee.go:879 and protocol/v2/ssv/runner/committee.go:824.
-  - Retry model for transient timing/order issues: protocol/v2/ssv/validator/queue_validator.go:230.
-  - Inference from code: this design gives lockstep timing with beacon slots plus fault-tolerant distributed execution, while reorg-triggered invalidation/reload reduces stale or duplicated duty execution risk.
+- Duplicate/stale suppression and execution safety:
+  - `protocol/v2/ssv/validator/committee_guard.go::StartDuty(...)` enforces exclusive per-validator duty progression.
+  - `ValidDuty(...)` rejects stale/outdated duties.
+  - `StopValidator(...)` prevents execution for stopped validators.
+- Submission dedupe and completion tracking:
+  - `protocol/v2/ssv/runner/committee.go::HasSubmitted(...)`
+  - `RecordSubmission(...)`
+  - `HasSubmittedAllValidatorDuties(...)`
+- Retry model for transient ordering/timing failures:
+  - `protocol/v2/ssv/validator/queue_validator.go` replays retryable errors with fixed `25ms` delay and bounded attempts `SlotDuration / 25ms` (not infinite retries).
+- Inference from code: lockstep slot timing + bounded retries + reorg-triggered invalidation/refetch significantly reduce stale and duplicate execution under normal fault conditions.
