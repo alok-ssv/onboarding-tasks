@@ -15,7 +15,7 @@ This document maps `ssv-spec` definitions to `ssv` implementation entry points s
 ## Version pinning comes first
 
 - The implementation depends on `github.com/ssvlabs/ssv-spec` directly (`../ssv/go.mod`).
-- Current pinned module in this repo is `github.com/ssvlabs/ssv-spec v1.2.2`.
+- Current pinned module in the ssv repository is `github.com/ssvlabs/ssv-spec v1.2.2`.
 - Practical implication:
   - If you compare local `../ssv-spec` checkout to `../ssv` code, confirm they are the same version/commit or add a `replace` in `../ssv/go.mod` during review.
 
