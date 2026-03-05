@@ -2,6 +2,15 @@
 
 This document describes how SSV QBFT behaves under Byzantine input, delays, and partial outages, and what is guaranteed vs what can stall.
 
+## Read this if
+
+- You need to reason about safety vs liveness under real faults.
+- You need incident-ready expectations for delayed, dropped, or adversarial traffic.
+
+## Version context
+
+- Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
+
 ## Scope
 
 - Byzantine behavior and equivocation attempts
@@ -66,3 +75,8 @@ This document describes how SSV QBFT behaves under Byzantine input, delays, and 
   - `f+1` speed-up round-change cases,
   - timeout transitions and round-change justification cases.
 
+## How to verify quickly
+
+1. Run `go test ./protocol/v2/qbft/spectest` in `../ssv`.
+2. Filter failures by scenario group in `qbft_mapping_test.go`.
+3. For any suspect behavior, cross-check the same scenario family in `../ssv-spec/qbft/spectest/tests`.

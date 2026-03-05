@@ -2,6 +2,15 @@
 
 This document focuses on how QBFT maintains liveness when the current leader is slow, faulty, or unreachable.
 
+## Read this if
+
+- You are debugging stalled rounds or repeated timeouts.
+- You need to confirm how `f+1` partial quorum accelerates catch-up.
+
+## Version context
+
+- Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
+
 ## Scope
 
 - Leader selection logic
@@ -73,3 +82,45 @@ For rounds `> 1`, proposal validity requires round-change justification:
 - QBFT instance processing halts at configured cut-off round (`Instance.CanProcessMessages()` with `config.GetCutOffRound()`).
 - Consensus message validation also enforces role-specific max rounds (`message/validation/consensus_validation.go::maxRound(...)`).
 
+## Critical snippets
+
+### `f+1` round-change messages can trigger early jump
+
+```go
+func (i *Instance) hasReceivedPartialQuorum() (bool, []*specqbft.ProcessingMessage) {
+    all := i.State.RoundChangeContainer.AllMessages()
+    rc := make([]*specqbft.ProcessingMessage, 0)
+    for _, msg := range all {
+        if msg.QBFTMessage.Round > i.State.Round {
+            rc = append(rc, msg)
+        }
+    }
+    return specqbft.HasPartialQuorum(i.State.CommitteeMember, rc), rc
+}
+```
+
+Source: `../ssv/protocol/v2/qbft/instance/round_change.go`.
+
+### On partial quorum, node bumps round and broadcasts round-change
+
+```go
+func (i *Instance) uponChangeRoundPartialQuorum(logger *zap.Logger, newRound specqbft.Round) error {
+    i.bumpToRound(newRound)
+    i.State.ProposalAcceptedForCurrentRound = nil
+    i.config.GetTimer().TimeoutForRound(i.State.Height, i.State.Round)
+
+    roundChange, err := i.CreateRoundChange(newRound)
+    if err != nil {
+        return errors.Wrap(err, "failed to create round change message")
+    }
+    return i.Broadcast(roundChange)
+}
+```
+
+Source: `../ssv/protocol/v2/qbft/instance/round_change.go`.
+
+## How to verify quickly
+
+1. Run QBFT spectests with timeout scenarios: `go test ./protocol/v2/qbft/spectest`.
+2. Inspect vectors that force leader failure and observe round increments.
+3. Confirm path: timeout -> round-change -> partial/full quorum handling -> new proposal.

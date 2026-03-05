@@ -2,6 +2,15 @@
 
 This document explains how SSV spec tests are generated, executed, and used to validate protocol conformance and interoperability.
 
+## Read this if
+
+- You want deterministic proof that implementation behavior matches spec vectors.
+- You need to run or debug conformance mapping tests in `ssv`.
+
+## Version context
+
+- Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
+
 ## Scope
 
 - Execution of JSON-defined spec tests generated from `ssv-spec`

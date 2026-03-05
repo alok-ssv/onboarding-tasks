@@ -2,6 +2,15 @@
 
 This document explains how a single SSV duty reaches QBFT finality.
 
+## Read this if
+
+- You need a concrete mental model of proposal -> prepare -> commit.
+- You need to identify exactly where a duty becomes decided.
+
+## Version context
+
+- Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
+
 ## Scope
 
 - Proposal (`pre-prepare` equivalent), prepare, commit phases
@@ -72,3 +81,51 @@ This document explains how a single SSV duty reaches QBFT finality.
 - For proposal/prepare/commit/round-change processing, first message per signer+round is kept (`ssv-spec/qbft/message_container.go::AddFirstMsgForSignerAndRound(...)`), preventing duplicate-trigger loops.
 - Controller stores only recent instances (`protocol/v2/qbft/controller/types.go::InstanceContainer`).
 
+## Critical snippets
+
+### Commit quorum is first-message-per-signer, then `2f+1` unique signers
+
+```go
+func (i *Instance) UponCommit(...) (bool, []byte, *spectypes.SignedSSVMessage, error) {
+    addMsg, err := i.State.CommitContainer.AddFirstMsgForSignerAndRound(msg)
+    if err != nil || !addMsg {
+        return false, nil, nil, err
+    }
+
+    quorum, commitMsgs, err := i.commitQuorumForRoundRoot(msg.QBFTMessage.Root, msg.QBFTMessage.Round)
+    if err != nil || !quorum {
+        return false, nil, nil, err
+    }
+    ...
+    return true, fullData, agg, nil
+}
+
+func (i *Instance) commitQuorumForRoundRoot(root [32]byte, round specqbft.Round) (bool, []*specqbft.ProcessingMessage, error) {
+    signers, msgs := i.State.CommitContainer.LongestUniqueSignersForRoundAndRoot(round, root)
+    return i.State.CommitteeMember.HasQuorum(len(signers)), msgs, nil
+}
+```
+
+Source: `../ssv/protocol/v2/qbft/instance/commit.go`.
+
+### Dedupe guard keeps only first message for signer+round
+
+```go
+func (c *MsgContainer) AddFirstMsgForSignerAndRound(msg *ProcessingMessage) (bool, error) {
+    for _, existingMsg := range c.Msgs[msg.QBFTMessage.Round] {
+        if existingMsg.SignedMessage.MatchedSigners(msg.SignedMessage.OperatorIDs) {
+            return false, nil
+        }
+    }
+    c.Msgs[msg.QBFTMessage.Round] = append(c.Msgs[msg.QBFTMessage.Round], msg)
+    return true, nil
+}
+```
+
+Source: `../ssv-spec/qbft/message_container.go`.
+
+## How to verify quickly
+
+1. Run `go test ./protocol/v2/qbft/spectest` in `../ssv`.
+2. Inspect one happy-path and one timeout/round-change vector in `qbft_mapping_test`.
+3. Confirm decided state only appears after commit quorum (`2f+1`) for one root.

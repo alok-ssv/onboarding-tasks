@@ -2,6 +2,15 @@
 
 This document maps `ssv-spec` definitions to `ssv` implementation entry points so protocol reviews can be done against the real source of truth.
 
+## Read this if
+
+- You are reviewing a protocol behavior change and need spec parity checks.
+- You need exact symbol-level anchors across `ssv-spec` and `ssv`.
+
+## Version context
+
+- Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
+
 ## Scope
 
 - Message formats
@@ -79,3 +88,21 @@ Use this when reviewing a behavior change in `../ssv`:
 - Additional message admission checks in `message/validation/*` before runner/QBFT processing.
 
 These differences are operational hardening; they should not change protocol semantics defined by `ssv-spec`.
+
+## Critical snippet
+
+Use this pattern to verify that implementation keeps spec semantics while adding production wrappers:
+
+```go
+// spec: round-change partial quorum logic
+return specqbft.HasPartialQuorum(i.State.CommitteeMember, rc), rc
+```
+
+```go
+// impl: same semantic check in protocol/v2 instance processing
+return specqbft.HasPartialQuorum(i.State.CommitteeMember, rc), rc
+```
+
+Source anchors:
+- `../ssv-spec/qbft/round_change.go`
+- `../ssv/protocol/v2/qbft/instance/round_change.go`

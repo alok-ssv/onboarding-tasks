@@ -2,6 +2,15 @@
 
 This document follows a duty end-to-end: scheduler -> controller/queue -> runner execution, with operational log and tracing anchors.
 
+## Read this if
+
+- You need to trace one duty from scheduler trigger to beacon submission.
+- You need to know where to set breakpoints for missed/late duties.
+
+## Version context
+
+- Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
+
 ## Architecture at a glance
 
 - Scheduler layer: `operator/duties/*`
@@ -70,6 +79,42 @@ This document follows a duty end-to-end: scheduler -> controller/queue -> runner
 3. `ProcessPostConsensus(...)` reconstructs signatures per root and validator, then submits attestations and sync committee messages.
 4. `ProcessPreConsensus(...)` is intentionally unsupported.
 
+## Critical snippets
+
+### Proposer duty trigger starts at `executeDuty(...)`
+
+```go
+// 3) start consensus on duty + block data
+// 4) Once consensus decides, sign partial block and broadcast
+// 5) collect 2f+1 partial sigs, reconstruct and broadcast valid block sig to the BN
+func (r *ProposerRunner) executeDuty(ctx context.Context, logger *zap.Logger, duty spectypes.Duty) error {
+    ...
+    // sign partial randao
+    ...
+    r.measurements.StartPreConsensus()
+    if err := r.GetNetwork().Broadcast(msgID, msgToBroadcast); err != nil {
+        return fmt.Errorf("can't broadcast partial randao sig: %w", err)
+    }
+    ...
+}
+```
+
+Source: `../ssv/protocol/v2/ssv/runner/proposer.go`.
+
+### Committee runner explicitly has no pre-consensus phase
+
+```go
+func (r *CommitteeRunner) ProcessPreConsensus(
+    ctx context.Context,
+    logger *zap.Logger,
+    signedMsg *spectypes.PartialSignatureMessages,
+) error {
+    return errors.New("no pre consensus phase for committee runner")
+}
+```
+
+Source: `../ssv/protocol/v2/ssv/runner/committee.go`.
+
 ## Logs to watch (with levels)
 
 | Component | Level | Message | Notes |
@@ -106,3 +151,10 @@ This document follows a duty end-to-end: scheduler -> controller/queue -> runner
 ## Trace debugging
 
 - For trace-level debugging, use the `TraceQL` section in `docs/TRACES.md` (prefer section references over line numbers).
+
+## How to verify quickly
+
+1. Run one node locally with debug logs.
+2. Filter logs by `duty_id` and `runner_role`.
+3. For proposer duties, verify the order: `executeDuty` -> pre-consensus quorum -> consensus decided -> post-consensus quorum -> submit.
+4. For committee duties, confirm there are no pre-consensus logs by design.

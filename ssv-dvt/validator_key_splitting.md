@@ -1,5 +1,14 @@
 # SSV DVT - Validator key splitting and operator roles
 
+## Read this if
+
+- You need the security/liveness mental model for SSV operator clusters.
+- You are choosing operator set size and need correct threshold reasoning.
+
+## Version context
+
+- Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
+
 ## Key shares, quorum, and what is fixed in SSV
 
 SSV is not a free-choice `(n, t)` system in production. It follows the IBFT/QBFT fault model:

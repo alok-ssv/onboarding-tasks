@@ -1,3 +1,16 @@
+# SSV DVT - Consensus Interaction
+
+This document explains how SSV scheduling/orchestration interacts with beacon duty retrieval and consensus execution.
+
+## Read this if
+
+- You need to understand where duties are fetched vs where consensus is enforced.
+- You need to debug head/reorg-driven duty rescheduling.
+
+## Version context
+
+- Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
+
 ## Duty retrieval from Consensus Client
 
 - Scheduler is wired in `operator/node.go::New(...)` and started in `operator/node.go::Start(...)`.
@@ -47,6 +60,24 @@
 - Committee execution is not a simple static gate; it blocks in `operator/duties/scheduler.go::waitOneThirdIntoSlotOrValidBlock(...)` on a condition variable and unblocks when either trigger advances `headSlot`.
 - Runner pulls attestation data near execution time in `protocol/v2/ssv/runner/committee.go::executeDuty(...)`.
 
+## Critical snippets
+
+### Committee scheduling waits on dual trigger (not a simple `headSlot >= dutySlot` gate)
+
+```go
+// waitOneThirdIntoSlotOrValidBlock waits until one-third of the slot has passed
+// ...or for a head block event that might come in even sooner...
+func (s *Scheduler) waitOneThirdIntoSlotOrValidBlock(slot phase0.Slot) {
+    s.waitCond.L.Lock()
+    for s.headSlot < slot {
+        s.waitCond.Wait()
+    }
+    s.waitCond.L.Unlock()
+}
+```
+
+Source: `../ssv/operator/duties/scheduler.go`.
+
 ## Consensus-rule enforcement vs SSV orchestration
 
 - Orchestration layer: scheduler + handlers + controller decide when duties run.
@@ -69,3 +100,9 @@
 - Retry model for transient ordering/timing failures:
   - `protocol/v2/ssv/validator/queue_validator.go` replays retryable errors with fixed `25ms` delay and bounded attempts `SlotDuration / 25ms` (not infinite retries).
 - Inference from code: lockstep slot timing + bounded retries + reorg-triggered invalidation/refetch significantly reduce stale and duplicate execution under normal fault conditions.
+
+## How to verify quickly
+
+1. Trigger/observe head events and confirm `HandleHeadEvent(...)` executes per event.
+2. Confirm committee duties only execute after `waitOneThirdIntoSlotOrValidBlock(...)` unblocks.
+3. Force a reorg in test env and verify handlers reset/refetch duties via emitted `ReorgEvent`.
