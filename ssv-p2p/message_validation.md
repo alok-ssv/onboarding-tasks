@@ -2,24 +2,9 @@
 
 This document explains how SSV validates incoming protocol messages before they are allowed to propagate and enter runner/consensus processing.
 
-## Read this if
-
-- You are debugging why a message was accepted, ignored, or rejected.
-- You are hardening P2P boundaries against malformed/equivocal traffic.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Stateless and stateful validation of incoming SSV messages
-- Verification of structure, domain, duty identifiers, topic context, and round context
-- Cryptographic checks for signed envelopes
-- Timing and slot/round constraints before acceptance
-- Rejection/scoring behavior for malformed, equivocal, or out-of-context inputs
-
-## Outcome
 
 - Understanding how P2P validation protects consensus safety/liveness by filtering invalid traffic early.
 

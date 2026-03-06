@@ -2,24 +2,9 @@
 
 This document maps `ssv-spec` definitions to `ssv` implementation entry points so protocol reviews can be done against the real source of truth.
 
-## Read this if
-
-- You are reviewing a protocol behavior change and need spec parity checks.
-- You need exact symbol-level anchors across `ssv-spec` and `ssv`.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Message formats
-- State machines
-- Consensus transitions
-
-## Outcome
-
-- Ability to verify implementation behavior against spec expectations with concrete symbol-level anchors.
 
 ## Version pinning comes first
 

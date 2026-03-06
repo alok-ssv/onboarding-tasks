@@ -154,6 +154,7 @@ Two very practical corollaries:
 ### Scenarios
 
 - “Missed” attestation
+  
   Meaning: your duty did not make it on-chain at all (or too late to matter for rewards).
   Typical root causes:
   - validator never produced it (VC issue, duty scheduling, clock skew)
@@ -161,12 +162,14 @@ Two very practical corollaries:
   - reached peers but wasn’t aggregated/included
 
 - “Late” attestation
+  
   Meaning: it got included, but with high inclusion delay, reducing the value of the vote(s).
   A useful decomposition (from Lighthouse’s analysis framing):
   - observed_delay: how late you observed the block you’re meant to attest to
   - attestable_delay: time left before the attestation deadline; if it’s too high, you miss the window
 
 - “Incorrect” attestation (usually means “non-head”, sometimes “bad source/target”)
+  
   There are three ways to be “incorrect,” matching the three votes:
   - Non-head vote: beacon_block_root not equal to eventual canonical head for that slot. Most often caused by late/slow block propagation or validation, so your local fork choice head lags.
   - Bad target vote: voting for the wrong epoch checkpoint. This is rarer in normal operation, but can happen under reorgs or if your node is seriously out of sync.

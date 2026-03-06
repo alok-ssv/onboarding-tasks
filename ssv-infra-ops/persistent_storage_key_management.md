@@ -2,24 +2,9 @@
 
 This document covers where SSV node state and key material live in Kubernetes, and the durability/security trade-offs.
 
-## Read this if
-
-- You are responsible for operator key custody and restore procedures.
-- You need to understand storage durability trade-offs for node state.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Operator key storage
-- Volume configuration
-- Backup and recovery risks
-
-## Outcome
-
-- Understanding how key confidentiality and data durability depend on chart configuration.
 
 ## Operator key flow
 

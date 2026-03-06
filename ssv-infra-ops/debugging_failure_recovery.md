@@ -2,24 +2,9 @@
 
 This document provides infra-level debugging and recovery guidance for SSV nodes running under ArgoCD GitOps in Kubernetes.
 
-## Read this if
-
-- You are on-call for SSV nodes in Kubernetes and need triage/runbook flow.
-- You need fast diagnosis paths for rollout, scheduling, secret, and network failures.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Pod restarts
-- Resource exhaustion
-- Network disruptions
-
-## Outcome
-
-- Ability to diagnose failures quickly and apply low-risk recovery actions with GitOps awareness.
 
 ## Validation source and limitation
 

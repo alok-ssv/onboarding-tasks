@@ -2,20 +2,9 @@
 
 This document explains how a single SSV duty reaches QBFT finality.
 
-## Read this if
-
-- You need a concrete mental model of proposal -> prepare -> commit.
-- You need to identify exactly where a duty becomes decided.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Proposal (`pre-prepare` equivalent), prepare, commit phases
-- Quorum requirements under `n >= 3f+1`
-- Consensus instance lifecycle from start to decided
 
 ## Quorum model used by SSV
 

@@ -2,26 +2,9 @@
 
 This document explains how SSV spec tests are generated, executed, and used to validate protocol conformance and interoperability.
 
-## Read this if
-
-- You want deterministic proof that implementation behavior matches spec vectors.
-- You need to run or debug conformance mapping tests in `ssv`.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Execution of JSON-defined spec tests generated from `ssv-spec`
-- Validation of SSV protocol transitions/message flows independent from CL/EL business logic
-- Verification of duty orchestration, sequencing, and signature aggregation behavior
-- Deterministic input/output checks for core protocol components
-- Conformance checks for independent implementations
-
-## Outcome
-
-- Ability to prove an SSV node implementation conforms to the protocol spec using deterministic, reusable vectors.
 
 ## What is being tested
 

@@ -2,24 +2,9 @@
 
 This document explains how SSV nodes discover peers, handshake, and maintain connections in the libp2p network.
 
-## Read this if
-
-- You need a mental model of peer lifecycle before diving into topic propagation.
-- You are debugging peer churn, failed handshakes, or weak connectivity.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Peer discovery in the SSV network
-- Handshakes
-- Connection lifecycle
-
-## Outcome
-
-- Understanding how peers find each other and keep stable connectivity for duty execution.
 
 ## Network boot sequence
 

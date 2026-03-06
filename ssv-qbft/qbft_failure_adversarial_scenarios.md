@@ -2,20 +2,9 @@
 
 This document describes how SSV QBFT behaves under Byzantine input, delays, and partial outages, and what is guaranteed vs what can stall.
 
-## Read this if
-
-- You need to reason about safety vs liveness under real faults.
-- You need incident-ready expectations for delayed, dropped, or adversarial traffic.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Byzantine behavior and equivocation attempts
-- Message delays, reordering, and drops
-- Partial operator outages and partitions
 
 ## Assumptions and guarantees
 

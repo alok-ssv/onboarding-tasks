@@ -2,24 +2,9 @@
 
 This document describes how SSV node deployments are packaged and promoted using `charts`, `gitops-stage`, and `gitops-production`.
 
-## Read this if
-
-- You are changing chart/appset versions and need safe rollout/rollback flow.
-- You need to know where stage and production deployment logic diverge.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Deployment process
-- Repo responsibilities
-- Promotion and rollback model
-
-## Outcome
-
-- Clear understanding of how SSV node infra changes move from chart edits to running workloads.
 
 ## Repositories in scope
 

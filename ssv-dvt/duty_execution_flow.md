@@ -2,11 +2,6 @@
 
 This document follows a duty end-to-end: scheduler -> controller/queue -> runner execution, with operational log and tracing anchors.
 
-## Read this if
-
-- You need to trace one duty from scheduler trigger to beacon submission.
-- You need to know where to set breakpoints for missed/late duties.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)

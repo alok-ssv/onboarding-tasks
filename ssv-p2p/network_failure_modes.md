@@ -2,24 +2,9 @@
 
 This document analyzes how adverse network conditions affect SSV consensus liveness and validator performance.
 
-## Read this if
-
-- You need incident triage expectations under partitions/latency/loss.
-- You are correlating networking symptoms with QBFT liveness outcomes.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Partitions
-- High latency
-- Message duplication or loss
-
-## Outcome
-
-- Understanding how network faults map to QBFT liveness risk and operational behavior.
 
 ## Failure model summary
 

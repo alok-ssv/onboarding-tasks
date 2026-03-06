@@ -2,20 +2,9 @@
 
 This document focuses on how QBFT maintains liveness when the current leader is slow, faulty, or unreachable.
 
-## Read this if
-
-- You are debugging stalled rounds or repeated timeouts.
-- You need to confirm how `f+1` partial quorum accelerates catch-up.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Leader selection logic
-- Timeout behavior
-- Round-change triggers and proposal justification
 
 ## Leader election in SSV QBFT
 

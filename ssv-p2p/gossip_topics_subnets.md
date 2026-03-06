@@ -2,24 +2,9 @@
 
 This document explains how SSV maps duties and consensus traffic onto gossip topics and how messages propagate across operators.
 
-## Read this if
-
-- You need to trace a message from runner output to pubsub topic.
-- You need to confirm which subnet a given committee/duty uses.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Duty topics
-- Consensus message topics
-- Validation hooks
-
-## Outcome
-
-- Ability to trace how protocol messages move across operators over pubsub.
 
 ## Topic model used by the implementation
 

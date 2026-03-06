@@ -2,25 +2,9 @@
 
 This document describes how SSV nodes are deployed and run in Kubernetes using `ssvlabs/charts`, `ssvlabs/gitops-stage`, and `ssvlabs/gitops-production` (often referred to as `gitops-prod`).
 
-## Read this if
-
-- You are onboarding to production node lifecycle in Kubernetes.
-- You need to map Argo apps to runtime StatefulSets/services.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Pods and containers
-- Configs
-- Services and networking
-- Startup and shutdown behavior
-
-## Outcome
-
-- Clear mental model of how an SSV node is created, configured, scheduled, and exposed in cluster environments.
 
 ## Control plane topology (GitOps)
 

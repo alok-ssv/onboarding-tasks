@@ -2,11 +2,6 @@
 
 This document explains how SSV scheduling/orchestration interacts with beacon duty retrieval and consensus execution.
 
-## Read this if
-
-- You need to understand where duties are fetched vs where consensus is enforced.
-- You need to debug head/reorg-driven duty rescheduling.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)

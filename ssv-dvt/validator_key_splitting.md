@@ -1,10 +1,5 @@
 # SSV DVT - Validator key splitting and operator roles
 
-## Read this if
-
-- You need the security/liveness mental model for SSV operator clusters.
-- You are choosing operator set size and need correct threshold reasoning.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
@@ -84,21 +79,27 @@ Concrete example (`n=4`):
 ## Common failure scenarios and mitigations
 
 - More than `f` operators unavailable -> quorum (`2f+1`) not reached -> liveness loss.
+  
   Mitigation: independent operators, geo/provider diversity, redundancy, strong on-call.
 
 - `f + 1` Byzantine operators withhold/with invalid behavior -> consensus/signing stalls.
+  
   Mitigation: fast detection, performance SLAs, operator replacement/reshare playbooks.
 
 - `t` share compromises (`2f+1`) -> key compromise / unauthorized threshold signing.
+  
   Mitigation: strict key custody, HSM-backed storage, least privilege, regular audits.
 
 - Collector/aggregator bottleneck -> delayed or failed reconstruction/submission.
+  
   Mitigation: redundant collection paths, robust gossip, fallback collectors.
 
 - Network partition -> only one partition can reach quorum under protocol assumptions; other partitions stall.
+  
   Mitigation: resilient networking, partition detection, conservative failover policies.
 
 - Operator set change without proper resharing -> stale trust assumptions.
+  
   Mitigation: explicit resharing/DKG procedure for every membership change.
 
 ## Practical reference table (supported committee sizes)

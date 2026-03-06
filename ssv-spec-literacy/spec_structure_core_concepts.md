@@ -2,24 +2,9 @@
 
 This document is a navigation map for `ssv-spec` so you can quickly find the protocol source of truth and use the right abstraction level when reading or reviewing code.
 
-## Read this if
-
-- You are new to `ssv-spec` and need a fast orientation map.
-- You need to know which package owns which protocol concern.
-
 ## Version context
 
 - Snapshot reference: [`REPO_CONTEXT.md`](../REPO_CONTEXT.md)
-
-## Scope
-
-- Repository layout
-- Terminology and abstractions
-- Separation of concerns between protocol layers
-
-## Outcome
-
-- Comfortably navigate `ssv-spec` and cite the right source file for any protocol question.
 
 ## Repository layout (what each top-level package owns)
 
