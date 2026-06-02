@@ -60,6 +60,7 @@
 5) How many messages does the proposer “have to look for”?
 
    There are two relevant gossip streams:
+   
    A) Individual attestations (subnet gossip)
 
       Count ≈ N/32 per slot (e.g., ~30k)
@@ -104,9 +105,9 @@ An aggregate attestation is basically:
   - one aggregated BLS signature
 
 Aggregation bits correctness
-For each attestation received:
-  - determine the validator’s position in the committee
-  - set that bit in aggregation_bits
+  - For each attestation received:
+    - determine the validator’s position in the committee
+    - set that bit in aggregation_bits
 
 Rules you must maintain:
   - No duplicate signers (don’t set the same bit twice)
@@ -122,7 +123,6 @@ Aggregator’s job
   - output a single aggregate signature
 
 Verifier’s job (what the network checks)
-  Nodes verify:
   - attestation_data is valid for that slot/committee
   - aggregation_bits length matches committee size
   - aggregated signature is valid for the set of pubkeys indicated by the bits, under the correct domain (attestation domain)
@@ -193,6 +193,7 @@ Attestation Aggregator Duty Full Cycle:
 ### Implementation
 
  1. Scheduling: aggregator duties are driven by the attester handler
+  
   File: operator/duties/attester.go
 
   - Attester duties are fetched each epoch.
@@ -207,6 +208,7 @@ Attestation Aggregator Duty Full Cycle:
   ———
 
   2. Pre‑consensus: selection proof signing + aggregator check
+  
   File: protocol/v2/ssv/runner/aggregator.go
 
   Step A: executeDuty()
@@ -223,6 +225,7 @@ Attestation Aggregator Duty Full Cycle:
   If not an aggregator, duty ends immediately.
   
   3. If aggregator: get aggregate attestation from BN
+  
   File: protocol/v2/ssv/runner/aggregator.go, Beacon client in beacon/goclient/aggregator.go
 
   - In ProcessPreConsensus(...), after passing IsAggregator(...), it calls:
@@ -232,6 +235,7 @@ Attestation Aggregator Duty Full Cycle:
   ———
 
   4. QBFT consensus on AggregateAndProof
+  
   File: protocol/v2/ssv/runner/aggregator.go
 
   - The AggregateAndProof is marshaled into ValidatorConsensusData.
@@ -241,6 +245,7 @@ Attestation Aggregator Duty Full Cycle:
   ———
 
   5. Post‑consensus: sign & submit AggregateAndProof
+  
   Files: protocol/v2/ssv/runner/aggregator.go, beacon/goclient/aggregator.go
 
   - In ProcessConsensus(...): each operator signs the aggregate root (partial sig).
